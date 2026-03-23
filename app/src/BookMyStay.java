@@ -25,84 +25,46 @@
  */
 import java.util.*;
 
-class Room {
-    private String type;
-    private double price;
-    private List<String> amenities;
+class Reservation {
+    private String guestName;
+    private String roomType;
 
-    public Room(String type, double price, List<String> amenities) {
-        this.type = type;
-        this.price = price;
-        this.amenities = amenities;
+    public Reservation(String guestName, String roomType) {
+        this.guestName = guestName;
+        this.roomType = roomType;
     }
 
-    public String getType() {
-        return type;
+    public String getGuestName() {
+        return guestName;
     }
 
-    public double getPrice() {
-        return price;
-    }
-
-    public List<String> getAmenities() {
-        return amenities;
+    public String getRoomType() {
+        return roomType;
     }
 }
 
-class Inventory {
-    private Map<String, Integer> availability = new HashMap<>();
+class BookingRequestQueue {
+    private Queue<Reservation> queue = new LinkedList<>();
 
-    public void addRoom(String type, int count) {
-        availability.put(type, count);
+    public void addRequest(Reservation reservation) {
+        queue.offer(reservation);
     }
 
-    public int getAvailability(String type) {
-        return availability.getOrDefault(type, 0);
-    }
-
-    public Map<String, Integer> getAllAvailability() {
-        return Collections.unmodifiableMap(availability);
-    }
-}
-
-class SearchService {
-    private Inventory inventory;
-    private Map<String, Room> roomMap;
-
-    public SearchService(Inventory inventory, Map<String, Room> roomMap) {
-        this.inventory = inventory;
-        this.roomMap = roomMap;
-    }
-
-    public void searchAvailableRooms() {
-        Map<String, Integer> data = inventory.getAllAvailability();
-        for (String type : data.keySet()) {
-            int count = data.get(type);
-            if (count > 0 && roomMap.containsKey(type)) {
-                Room room = roomMap.get(type);
-                System.out.println("Room Type: " + room.getType());
-                System.out.println("Price: " + room.getPrice());
-                System.out.println("Amenities: " + room.getAmenities());
-                System.out.println("Available: " + count);
-                System.out.println("---------------------------");
-            }
+    public void displayRequests() {
+        for (Reservation r : queue) {
+            System.out.println("Guest: " + r.getGuestName() + ", Room Type: " + r.getRoomType());
         }
     }
 }
 
 public class BookMyStay {
     public static void main(String[] args) {
-        Inventory inventory = new Inventory();
-        inventory.addRoom("Single", 3);
-        inventory.addRoom("Double", 0);
-        inventory.addRoom("Suite", 2);
+        BookingRequestQueue bookingQueue = new BookingRequestQueue();
 
-        Map<String, Room> rooms = new HashMap<>();
-        rooms.put("Single", new Room("Single", 1000, Arrays.asList("WiFi", "TV")));
-        rooms.put("Double", new Room("Double", 2000, Arrays.asList("WiFi", "TV", "AC")));
-        rooms.put("Suite", new Room("Suite", 5000, Arrays.asList("WiFi", "TV", "AC", "Mini Bar")));
+        bookingQueue.addRequest(new Reservation("Alice", "Single"));
+        bookingQueue.addRequest(new Reservation("Bob", "Double"));
+        bookingQueue.addRequest(new Reservation("Charlie", "Suite"));
 
-        SearchService searchService = new SearchService(inventory, rooms);
-        searchService.searchAvailableRooms();
+        bookingQueue.displayRequests();
     }
 }
