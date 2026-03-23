@@ -43,28 +43,77 @@ class Reservation {
     }
 }
 
-class BookingRequestQueue {
-    private Queue<Reservation> queue = new LinkedList<>();
+class InventoryService {
+    private Map<String, Integer> availability = new HashMap<>();
 
-    public void addRequest(Reservation reservation) {
-        queue.offer(reservation);
+    public void addRoom(String type, int count) {
+        availability.put(type, count);
     }
 
-    public void displayRequests() {
-        for (Reservation r : queue) {
-            System.out.println("Guest: " + r.getGuestName() + ", Room Type: " + r.getRoomType());
+    public int getAvailability(String type) {
+        return availability.getOrDefault(type, 0);
+    }
+
+    public void decrement(String type) {
+        availability.put(type, availability.get(type) - 1);
+    }
+}
+
+class BookingService {
+    private Queue<Reservation> queue;
+    private InventoryService inventory;
+    private Set<String> allocatedRoomIds = new HashSet<>();
+    private Map<String, Set<String>> roomAllocations = new HashMap<>();
+    private int idCounter = 1;
+
+    public BookingService(Queue<Reservation> queue, InventoryService inventory) {
+        this.queue = queue;
+        this.inventory = inventory;
+    }
+
+    private String generateRoomId(String type) {
+        String id;
+        do {
+            id = type.substring(0, 1).toUpperCase() + idCounter++;
+        } while (allocatedRoomIds.contains(id));
+        return id;
+    }
+
+    public void processBookings() {
+        while (!queue.isEmpty()) {
+            Reservation r = queue.poll();
+            String type = r.getRoomType();
+
+            if (inventory.getAvailability(type) > 0) {
+                String roomId = generateRoomId(type);
+                allocatedRoomIds.add(roomId);
+
+                roomAllocations.putIfAbsent(type, new HashSet<>());
+                roomAllocations.get(type).add(roomId);
+
+                inventory.decrement(type);
+
+                System.out.println("Confirmed: " + r.getGuestName() + " -> " + type + " Room ID: " + roomId);
+            } else {
+                System.out.println("Failed: " + r.getGuestName() + " -> No availability for " + type);
+            }
         }
     }
 }
 
 public class BookMyStay {
     public static void main(String[] args) {
-        BookingRequestQueue bookingQueue = new BookingRequestQueue();
+        InventoryService inventory = new InventoryService();
+        inventory.addRoom("Single", 2);
+        inventory.addRoom("Double", 1);
 
-        bookingQueue.addRequest(new Reservation("Alice", "Single"));
-        bookingQueue.addRequest(new Reservation("Bob", "Double"));
-        bookingQueue.addRequest(new Reservation("Charlie", "Suite"));
+        Queue<Reservation> queue = new LinkedList<>();
+        queue.offer(new Reservation("Alice", "Single"));
+        queue.offer(new Reservation("Bob", "Single"));
+        queue.offer(new Reservation("Charlie", "Single"));
+        queue.offer(new Reservation("David", "Double"));
 
-        bookingQueue.displayRequests();
+        BookingService bookingService = new BookingService(queue, inventory);
+        bookingService.processBookings();
     }
 }
