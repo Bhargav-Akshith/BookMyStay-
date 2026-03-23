@@ -23,47 +23,86 @@
  * @author Developer
  * @version 1.0
  */
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-class RoomInventory {
-    private Map<String, Integer> inventory;
+class Room {
+    private String type;
+    private double price;
+    private List<String> amenities;
 
-    public RoomInventory() {
-        inventory = new HashMap<>();
-        inventory.put("Single Room", 5);
-        inventory.put("Double Room", 3);
-        inventory.put("Suite Room", 2);
+    public Room(String type, double price, List<String> amenities) {
+        this.type = type;
+        this.price = price;
+        this.amenities = amenities;
     }
 
-    public int getAvailability(String roomType) {
-        return inventory.getOrDefault(roomType, 0);
+    public String getType() {
+        return type;
     }
 
-    public void updateAvailability(String roomType, int count) {
-        inventory.put(roomType, count);
+    public double getPrice() {
+        return price;
     }
 
-    public void displayInventory() {
-        for (Map.Entry<String, Integer> entry : inventory.entrySet()) {
-            System.out.println(entry.getKey() + " Available: " + entry.getValue());
+    public List<String> getAmenities() {
+        return amenities;
+    }
+}
+
+class Inventory {
+    private Map<String, Integer> availability = new HashMap<>();
+
+    public void addRoom(String type, int count) {
+        availability.put(type, count);
+    }
+
+    public int getAvailability(String type) {
+        return availability.getOrDefault(type, 0);
+    }
+
+    public Map<String, Integer> getAllAvailability() {
+        return Collections.unmodifiableMap(availability);
+    }
+}
+
+class SearchService {
+    private Inventory inventory;
+    private Map<String, Room> roomMap;
+
+    public SearchService(Inventory inventory, Map<String, Room> roomMap) {
+        this.inventory = inventory;
+        this.roomMap = roomMap;
+    }
+
+    public void searchAvailableRooms() {
+        Map<String, Integer> data = inventory.getAllAvailability();
+        for (String type : data.keySet()) {
+            int count = data.get(type);
+            if (count > 0 && roomMap.containsKey(type)) {
+                Room room = roomMap.get(type);
+                System.out.println("Room Type: " + room.getType());
+                System.out.println("Price: " + room.getPrice());
+                System.out.println("Amenities: " + room.getAmenities());
+                System.out.println("Available: " + count);
+                System.out.println("---------------------------");
+            }
         }
     }
 }
 
 public class BookMyStay {
     public static void main(String[] args) {
+        Inventory inventory = new Inventory();
+        inventory.addRoom("Single", 3);
+        inventory.addRoom("Double", 0);
+        inventory.addRoom("Suite", 2);
 
-        System.out.println("Book My Stay App - Version 3.1");
-        System.out.println();
+        Map<String, Room> rooms = new HashMap<>();
+        rooms.put("Single", new Room("Single", 1000, Arrays.asList("WiFi", "TV")));
+        rooms.put("Double", new Room("Double", 2000, Arrays.asList("WiFi", "TV", "AC")));
+        rooms.put("Suite", new Room("Suite", 5000, Arrays.asList("WiFi", "TV", "AC", "Mini Bar")));
 
-        RoomInventory inventory = new RoomInventory();
-        inventory.displayInventory();
-
-        System.out.println();
-        inventory.updateAvailability("Single Room", 4);
-
-        System.out.println("Updated Inventory:");
-        inventory.displayInventory();
+        SearchService searchService = new SearchService(inventory, rooms);
+        searchService.searchAvailableRooms();
     }
 }
